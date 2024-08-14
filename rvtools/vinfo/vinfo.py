@@ -99,10 +99,10 @@ def vinfo_collect(service_instance, directory):
             vinfo_data.append([{"powerstate": powerstate}])
 
             # configStatus
-            config_status = child.configStatus
-            if config_status is None:
-                config_status = ""
-            vinfo_data.append([{"config_status": config_status}])
+            # config_status = child.configStatus
+            # if config_status is None:
+            #     config_status = ""
+            # vinfo_data.append([{"config_status": config_status}])
 
             # guest.hostName
             dns_name = child.guest.hostName
@@ -111,16 +111,16 @@ def vinfo_collect(service_instance, directory):
             vinfo_data.append([{"dns_name": dns_name}])
 
             # runtime.connectionState
-            connection_state = child.runtime.connectionState
-            if connection_state is None:
-                connection_state = ""
-            vinfo_data.append([{"connection_state": connection_state}])
+            # connection_state = child.runtime.connectionState
+            # if connection_state is None:
+            #     connection_state = ""
+            # vinfo_data.append([{"connection_state": connection_state}])
 
             # guest.guestState
-            guest_state = child.guest.guestState
-            if guest_state is None:
-                guest_state = ""
-            vinfo_data.append([{"guest_state": guest_state}])
+            # guest_state = child.guest.guestState
+            # if guest_state is None:
+            #     guest_state = ""
+            # vinfo_data.append([{"guest_state": guest_state}])
 
             # config.hardware.numCPU
             cpus = child.config.hardware.numCPU
@@ -138,23 +138,44 @@ def vinfo_collect(service_instance, directory):
             nics = child.network.__len__()
             vinfo_data.append([{"nics": nics}])
 
-            # layout.disk count
-            disks = child.layout.disk.__len__()
+            # layoutEx.disk count
+            disks = child.layoutEx.disk.__len__()
             if disks is None:
                 disks = ""
-            vinfo_data.append([{"disks": disks}])
+            vinfo_data.append([{"disk count": disks}])
+
+            # config.hardware.device
+            vdinfo_data = []
+            devices = child.config.hardware.device
+            for dev in devices:
+                if isinstance(dev, vim.vm.device.VirtualDisk):
+                    per_vd_data = {}
+                    per_vd_data["Disk label"] = dev.deviceInfo.label
+                    per_vd_data["Disk capacity (bytes)"] = dev.capacityInBytes
+                    try:
+                        per_vd_data["Disk datastore"] = dev.backing.datastore.info.name
+                    except AttributeError:
+                        per_vd_data["Disk datastore"] = None
+                    try:
+                        per_vd_data["Disk thinProvisioned"] = (
+                            dev.backing.thinProvisioned
+                        )
+                    except AttributeError:
+                        per_vd_data["Disk thinProvisioned"] = None
+                    vdinfo_data.append(per_vd_data)
+            vinfo_data.append(vdinfo_data)
 
             # config.firmware
-            firmware = child.config.firmware
-            if firmware is None:
-                firmware = ""
-            vinfo_data.append([{"firmware": firmware}])
+            # firmware = child.config.firmware
+            # if firmware is None:
+            #     firmware = ""
+            # vinfo_data.append([{"firmware": firmware}])
 
             # config.files.vmPathName
-            path = child.config.files.vmPathName
-            if path is None:
-                path = ""
-            vinfo_data.append([{"path": path}])
+            # path = child.config.files.vmPathName
+            # if path is None:
+            #     path = ""
+            # vinfo_data.append([{"path": path}])
 
             # Datacenter
             datacenter = get_obj(content, [vim.Datacenter])
@@ -173,16 +194,16 @@ def vinfo_collect(service_instance, directory):
             )
 
             # vm id
-            vm_id = child._moId
-            if vm_id is None:
-                vm_id = ""
-            vinfo_data.append([{"vm_id": vm_id}])
+            # vm_id = child._moId
+            # if vm_id is None:
+            #     vm_id = ""
+            # vinfo_data.append([{"vm_id": vm_id}])
 
             # config.uuid
-            vm_uuid = child.config.uuid
-            if vm_uuid is None:
-                vm_uuid = ""
-            vinfo_data.append([{"vm_uuid": vm_uuid}])
+            # vm_uuid = child.config.uuid
+            # if vm_uuid is None:
+            #     vm_uuid = ""
+            # vinfo_data.append([{"vm_uuid": vm_uuid}])
 
             print("VM: {}".format(child.name))
 
