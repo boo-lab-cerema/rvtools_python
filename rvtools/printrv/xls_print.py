@@ -32,7 +32,7 @@ def xls_print(module_name, object_list, directory):
                 for col, fields in enumerate(section):
                     for row, (key, value) in enumerate(fields.items()):
                         worksheet.write(row_offset + row, 0, key)
-                        worksheet.write(row_offset + row, col + 1, str(value))
+                        worksheet.write(row_offset + row, col + 1, value)
                     fields_count = max(fields_count, row + 1)
                 row_offset += fields_count
 
