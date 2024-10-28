@@ -3,6 +3,8 @@ from pyVmomi import vim
 # from rvtools.printrv.csv_print import *
 from rvtools.printrv.xls_print import xls_print
 
+BYTES_TO_GB = 0.0000000009313225746
+
 
 def get_obj(content, vimtype):
     obj = None
@@ -44,13 +46,18 @@ def vinfo_collect(service_instance, directory):
         summary = child.summary
         vinfo_data = []
         vinfo = {"object": summary.name or "", "data": vinfo_data}
-        vinfo_data.append([{"capacity (bytes)": summary.capacity}])
-        vinfo_data.append([{"free space (bytes)": summary.freeSpace}])
+        vinfo_data.append([{"capacité": summary.capacity * BYTES_TO_GB}])
+        vinfo_data.append([{"libre": summary.freeSpace * BYTES_TO_GB}])
         vinfo_data.append(
-            [{"used (computed, bytes)": summary.capacity - summary.freeSpace}]
+            [
+                {
+                    "utilisé (calculé)": (summary.capacity - summary.freeSpace)
+                    * BYTES_TO_GB
+                }
+            ]
         )
         vinfo_data.append([{"type": summary.type}])
-
+        vinfo_data.append([{"# de vm": len(child.vm)}])
         # TODO
         # ds.info : vim.Datastore.Info
 
@@ -84,11 +91,15 @@ def vinfo_collect(service_instance, directory):
                 datastoreName = datastoreInfos.name
                 per_ds_data["Datastore"] = datastoreName
                 # Storage space, in bytes, on this datastore that is actually being used by the virtual machine.
-                per_ds_data["DS space used by vm (bytes)"] = usage.committed
+                per_ds_data["espace DS utilisé"] = usage.committed * BYTES_TO_GB
                 #  Additional storage space, in bytes, potentially used by the virtual machine on this datastore. (e.g. lazily allocated disks grow, or storage for swap...) -- /!\  If the virtual machine is running off delta disks (for example because a snapshot was taken), then only the potential growth of the currently used delta-disks is considered.
-                per_ds_data["DS potential growth by vm (bytes)"] = usage.uncommitted
+                per_ds_data["DS potential growth by vm"] = (
+                    usage.uncommitted * BYTES_TO_GB
+                )
                 #  Storage space, in bytes, occupied by the virtual machine on this datastore that is not shared with any other virtual machine.
-                per_ds_data["DS occupied and not shared by vm (bytes)"] = usage.unshared
+                per_ds_data["DS occupied and not shared by vm"] = (
+                    usage.unshared * BYTES_TO_GB
+                )
                 dsinfo_data.append(per_ds_data)
             vinfo_data.append(dsinfo_data)
 
@@ -142,7 +153,7 @@ def vinfo_collect(service_instance, directory):
             disks = child.layoutEx.disk.__len__()
             if disks is None:
                 disks = ""
-            vinfo_data.append([{"disk count": disks}])
+            vinfo_data.append([{"# de disques": disks}])
 
             # config.hardware.device
             vdinfo_data = []
@@ -151,7 +162,7 @@ def vinfo_collect(service_instance, directory):
                 if isinstance(dev, vim.vm.device.VirtualDisk):
                     per_vd_data = {}
                     per_vd_data["Disk label"] = dev.deviceInfo.label
-                    per_vd_data["Disk capacity (bytes)"] = dev.capacityInBytes
+                    per_vd_data["Disk capacity"] = dev.capacityInBytes * BYTES_TO_GB
                     try:
                         per_vd_data["Disk datastore"] = dev.backing.datastore.info.name
                     except AttributeError:
